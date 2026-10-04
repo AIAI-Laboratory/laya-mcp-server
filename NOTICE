@@ -1,0 +1,9 @@
+Laya MCP Server
+Copyright 2026 htrnguyen. Project-specific integration code.
+
+This project contains software developed by Convai Innovations (Laya),
+redistributed under Apache License 2.0; see vendor/laya/LICENSE and SOURCE.json.
+It also bundles Swagger UI distribution assets by SmartBear Software and contributors,
+under Apache License 2.0; see static/swagger/LICENSE, NOTICE and SOURCE.json.
+This project is an independent integration and is not affiliated with TypeSafe AI.
+Model weights are downloaded separately and are not distributed in this repository.

@@ -1,0 +1,55 @@
+# Local configuration and private data
+.env
+.env.*
+!.env.example
+/data/
+/backups/
+/reports/
+/secrets/
+*.pem
+*.key
+
+# Python / test / tool caches
+__pycache__/
+*.py[cod]
+.venv/
+.venv*/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.cache/
+.uv-cache/
+.coverage*
+htmlcov/
+coverage/
+*.egg-info/
+
+# Build and package output
+/build/
+/dist/
+node_modules/
+*.whl
+*.egg
+
+# Downloaded model weights and exports (source remains in vendor/)
+*.safetensors
+*.pt
+*.pth
+*.ckpt
+*.onnx
+*.gguf
+pytorch_model*.bin
+
+# Logs, temporary files and editor state
+*.log
+*.jsonl
+*.tmp
+*.bak
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
