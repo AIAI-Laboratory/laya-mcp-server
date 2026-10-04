@@ -1,0 +1,32 @@
+[
+  {
+    "id": "vi-billing",
+    "text": "Tôi bị trừ tiền hai lần cho cùng một hóa đơn, cần hoàn tiền.",
+    "expected": "billing"
+  },
+  {
+    "id": "vi-tech",
+    "text": "Ứng dụng bị văng ngay khi tôi mở trang cài đặt.",
+    "expected": "technical"
+  },
+  {
+    "id": "vi-account",
+    "text": "Tôi quên mật khẩu và không đăng nhập được.",
+    "expected": "account"
+  },
+  {
+    "id": "en-billing",
+    "text": "I was charged twice. Please refund the duplicate payment.",
+    "expected": "billing"
+  },
+  {
+    "id": "en-tech",
+    "text": "The application crashes whenever I open settings.",
+    "expected": "technical"
+  },
+  {
+    "id": "en-account",
+    "text": "I forgot my password and cannot sign in.",
+    "expected": "account"
+  }
+]
