@@ -1,0 +1,16 @@
+{
+  "model": "multilingual",
+  "state": "Tôi bị trừ tiền hai lần cho cùng một hóa đơn, cần hoàn tiền.",
+  "max_len": 512,
+  "questions": {
+    "category": {
+      "type": "choice",
+      "instructions": "Classify this support request.",
+      "criteria": {
+        "billing": "Payment, invoice, refund",
+        "technical": "Software crashes and application errors",
+        "account": "Login, password and account access"
+      }
+    }
+  }
+}
