@@ -1,0 +1,13 @@
+{
+  "repo": "https://github.com/NandhaKishorM/laya",
+  "commit": "2e4d9c87e8b1621deb344eac7de5c7258f32f849",
+  "archive_sha256": "72c6384be44e81a4e5912c6b6a286158c76769b93b3dc0b60bad3060e800cd5d",
+  "upstream_version": "0.3.26",
+  "runtime_model": {
+    "alias": "multilingual",
+    "repository": "convaiinnovations/laya",
+    "subfolder": "multilingual",
+    "revision": "55cf4c4ebb4ebe31b2550e8bdf3bd21b99753851",
+    "selection": "LAYA_REVISION=reviewed in pinned upstream"
+  }
+}
