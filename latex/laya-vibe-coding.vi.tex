@@ -1,0 +1,363 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage{report-style}
+\renewcommand{\abstractname}{TÓM TẮT}
+\renewcommand{\figurename}{Hình}
+\renewcommand{\tablename}{Bảng}
+\renewcommand{\refname}{TÀI LIỆU THAM KHẢO}
+\hypersetup{pdftitle={DỊCH VỤ QUYẾT ĐỊNH CHO AGENT LẬP TRÌNH},pdfauthor={AIAI Laboratory / htrnguyen}}
+\begin{document}
+\thispagestyle{firstpage}
+\begin{center}
+{\Large\bfseries DỊCH VỤ QUYẾT ĐỊNH CHO AGENT LẬP TRÌNH\par}
+\vspace{8pt}
+htrnguyen\\AIAI Laboratory\par
+\vspace{4pt}
+\href{https://aisq.science/}{aisq.science}\quad\href{https://www.htrnguyen.id.vn/}{htrnguyen.id.vn}\par
+\end{center}
+\begin{abstract}
+Agent lập trình có thể sinh kế hoạch và bản sửa, nhưng nhiều lựa chọn xung quanh chỉ có một tập đáp án nhỏ, rõ ràng. Báo cáo khảo sát khi nào nên tách những lựa chọn đó thành dịch vụ quyết định, khi nào nên dùng code xác định và cách đưa sự không chắc chắn vào quy trình. Từ nghiên cứu và hướng dẫn kỹ thuật được chọn, báo cáo giới thiệu Laya MCP Server như một triển khai giúp nhiều agent truy cập quyết định có giới hạn qua giao diện chung. Nội dung gồm khung chọn tác vụ, hợp đồng tích hợp, phương pháp làm việc tái lập và phép quan sát nhỏ có cả ca đúng lẫn sai. Báo cáo không khẳng định có huấn luyện model mới, benchmark tổng quát, chất lượng ngang Jev hay chắc chắn tăng năng suất.
+\end{abstract}
+\section{PHẠM VI VÀ PHƯƠNG PHÁP}
+Đây là khảo sát tường thuật có mục tiêu, không phải tổng quan hệ thống. Nguồn được chọn theo liên quan trực tiếp tới tổ chức agent, định tuyến model, từ chối dự đoán, chọn context và đánh giá. Nghiên cứu gốc/hướng dẫn chính thức được phân biệt với bài giải thích Jev và quan sát trên project. Ngày tra cứu: 04/10/2026.
+
+Đối tượng đọc là kỹ sư muốn đưa một công cụ phán đoán có giới hạn vào quy trình coding hiện có. Nội dung trung lập về triển khai; điều kiện cài đặt cụ thể được giữ trong README.
+
+Dịch vụ quyết định có ích khi cải thiện được một phần đo lường được của quy trình. Agent vẫn cần xác minh thay đổi sau đó.
+
+\section{NGHIÊN CỨU LIÊN QUAN}
+\begin{table}[H]
+\centering\small
+\renewcommand{\arraystretch}{1.15}
+\begin{tabularx}{\linewidth}{@{}YY@{}}
+\toprule
+\textbf{Chủ đề / nguồn} & \textbf{Điểm liên quan tới tích hợp} \\
+\midrule
+Tổ chức workflow \cite{r7} & Anthropic phân biệt luồng định trước với agent tự chọn hành động, khuyến nghị bắt đầu từ cách ghép đơn giản. \\
+Phán đoán hữu hạn \cite{r1} & Bài Jev trình bày quyết định ngữ nghĩa như giao diện riêng bên cạnh model sinh nội dung. \\
+Định tuyến được học \cite{r8} & RouteLLM dùng dữ liệu ưu tiên để học chọn giữa model mạnh và yếu; kết quả đánh đổi thuộc điều kiện thử nghiệm của nghiên cứu. \\
+Dự đoán có từ chối \cite{r9} & SelectiveNet học đồng thời dự đoán và từ chối; gợi ý đo chất lượng trên phần được chấp nhận khi thay đổi độ bao phủ. \\
+Chọn context \cite{r10} & Context engineering xem thông tin đưa vào model là tài nguyên cần quản lý, không đơn thuần là prompt dài hơn. \\
+Đánh giá agent \cite{r11} & Cần xét kết quả tác vụ và bằng chứng thực thi; một câu trả lời có vẻ hợp lý chưa đủ. \\
+\bottomrule
+\end{tabularx}
+\caption{Các hướng nghiên cứu và tổng hợp}
+\end{table}
+Các nguồn gợi ý xác định câu hỏi và giao diện trước khi quyết định trường hợp nào có thể tiếp tục mà không cần review thêm. Phép đánh giá sau đó cần bao quát cả quy trình. Những nguồn này tạo cơ sở khảo sát thiết kế, không chứng minh checkpoint Laya đang dùng chính xác.
+
+Project không triển khai RouteLLM như router được học và không dùng kiến trúc SelectiveNet. Giá trị tham khảo là cách đánh giá đánh đổi định tuyến và hành vi từ chối, thay vì sao chép một con số hoặc ngưỡng nổi bật.
+
+Kiểm tra schema đánh giá cấu trúc response. Đánh giá model đo độ đúng trên dữ liệu liên quan. Đánh giá workflow đo tác động đến kết quả tác vụ. Mỗi mức cần bằng chứng riêng.
+
+\section{ỨNG DỤNG}
+\begin{table}[H]
+\centering\small
+\renewcommand{\arraystretch}{1.15}
+\begin{tabularx}{\linewidth}{@{}YYY@{}}
+\toprule
+\textbf{Ứng dụng} & \textbf{Câu hỏi hữu hạn} & \textbf{Bằng chứng trong báo cáo} \\
+\midrule
+Định tuyến hỗ trợ & Thông điệp thuộc nhóm vấn đề có sẵn nào? & Đã quan sát một ví dụ rõ ràng. \\
+Phân loại log & Trích đoạn trực tiếp cho thấy lỗi nào? & Đã quan sát một ca rõ và một ca mơ hồ. \\
+Lọc tài liệu truy xuất & Đoạn này có trả lời câu hỏi được cung cấp? & Mẫu tích hợp; chưa đánh giá tác vụ ở đây. \\
+Chọn ứng viên & Lựa chọn được cung cấp nào khớp tiêu chí? & Mẫu tích hợp; chưa đánh giá tác vụ ở đây. \\
+Ưu tiên review & Mục nào nên được người/agent xem trước? & Đề xuất hỗ trợ; không phải cổng phát hành. \\
+\bottomrule
+\end{tabularx}
+\caption{Ứng dụng và khung lựa chọn tác vụ}
+\end{table}
+Đầu ra có biểu diễn bằng tập nhỏ, ổn định không? Người review có gán nhãn nhất quán cho mẫu đại diện không? Quyết định có đủ thường xuyên để bù chi phí phụ thuộc và review không? Nếu không, giữ logic trong agent chính hoặc code thông thường.
+
+Parser nên nhận diện lỗi connection refused khi định dạng đã rõ. Phân loại ngữ nghĩa hợp lý hơn khi cùng biểu hiện được mô tả bằng nhiều cách tự nhiên. Dù vậy, nhãn chỉ là hướng điều tra, không phải nguyên nhân gốc đã xác nhận.
+
+Không dùng service làm cổng duyệt duy nhất cho hành động phá hủy hoặc thay thế test. Luôn có nhánh xử lý bằng chứng chưa đủ.
+
+\section{TÍCH HỢP LAYA MCP}
+Laya MCP Server được xây dựng để cung cấp phán đoán hữu hạn nhất quán cho nhiều client coding, không nhúng riêng quy tắc project vào từng client. Tích hợp giữ giao diện chung, metadata rõ và hướng dẫn vận hành có thể đọc được. \cite{r2,r5,r6}
+
+\begin{figure}[H]
+\centering
+\resizebox{0.86\linewidth}{!}{%
+\begin{tikzpicture}
+\node[box] (n0) at (0,0) {Agent chính\\lập kế hoạch / giải thích / sửa};
+\node[box] (n1) at (4.4,0) {MCP hoặc REST\\request được kiểm tra};
+\node[box] (n2) at (8.8,0) {Dịch vụ quyết định\\phán đoán theo kiểu dữ liệu};
+\node[box] (n3) at (8.8,-2.2) {Kết quả có cấu trúc\\review và bằng chứng};
+\node[box,text width=7.75cm] (n4) at (2.2,-2.2) {Code, test và phân quyền\\kiểm chứng trước hành động};
+\draw[arr] (n0) -- (n1);
+\draw[arr] (n1) -- (n2);
+\draw[arr] (n2) -- (n3);
+\draw[arr] (n3) -- (n4);
+\end{tikzpicture}
+}
+\caption{Kiến trúc tích hợp. Service dự đoán; agent và ứng dụng quyết định bước tiếp theo.}
+\end{figure}
+\begin{table}[H]
+\centering\small
+\renewcommand{\arraystretch}{1.15}
+\begin{tabularx}{\linewidth}{@{}YY@{}}
+\toprule
+\textbf{Nhu cầu thiết kế} & \textbf{Cách project đáp ứng} \\
+\midrule
+Truy cập dùng chung & Tool MCP và REST chuẩn hóa dùng cùng hợp đồng quyết định. \\
+Cài đặt ít bước & Một lệnh setup đăng ký client global tìm thấy và skill dùng chung. \\
+Tự khám phá cách dùng & Tool/resource hướng dẫn, tài liệu HTTP, Swagger, settings có thể copy. \\
+Debug nhanh & Caller/task, trace ID, log có giới hạn và lỗi backend rõ ràng. \\
+\bottomrule
+\end{tabularx}
+\caption{Nhu cầu thiết kế và cách triển khai}
+\end{table}
+Service dự đoán giá trị, không thi hành nó. Cài global giúp user cài đặt dùng tool xuyên project, không đồng nghĩa mọi user/máy đều được cấu hình. Người vận hành vẫn quản lý quyền truy cập và dữ liệu.
+
+\section{HỢP ĐỒNG QUYẾT ĐỊNH}
+\begin{figure}[H]
+\centering
+\resizebox{0.86\linewidth}{!}{%
+\begin{tikzpicture}
+\node[box] (n0) at (0,0) {INPUT\\state + questions\\caller + task};
+\node[box] (n1) at (4.4,0) {KIỂM TRA\\schema và giới hạn\\từ chối input sai};
+\node[box] (n2) at (8.8,0) {KẾT QUẢ\\giá trị + xác suất\\review + trace};
+\node[box,fill=warmfill] (n3) at (4.4,-2.1) {LỖI\\báo lỗi rõ ràng\\không fallback trả phí};
+\draw[arr] (n0) -- (n1);
+\draw[arr] (n1) -- (n2);
+\draw[arr] (n1) -- (n3);
+\end{tikzpicture}
+}
+\caption{Kiểm tra phân biệt request hợp lệ, kết quả dùng được và lỗi được báo rõ.}
+\end{figure}
+\begin{table}[H]
+\centering\small
+\renewcommand{\arraystretch}{1.15}
+\begin{tabularx}{\linewidth}{@{}YYY@{}}
+\toprule
+\textbf{Kiểu} & \textbf{Mục đích} & \textbf{Giới hạn hiện tại} \\
+\midrule
+choice & Chọn một nhãn có sẵn & 2-10 mô tả; thêm lựa chọn review khi cần. \\
+noul & Ước lượng mệnh đề đúng/sai & Bản này luôn yêu cầu xem lại. \\
+score & Chấm theo mô tả có thứ tự & 2-5 mức; thử nghiệm, luôn review. \\
+\bottomrule
+\end{tabularx}
+\caption{Kiểu câu hỏi và giới hạn sử dụng}
+\end{table}
+laya\_decide và POST /v1/decide dùng cùng schema chuẩn hóa. Gửi state ngắn, một đến ba câu hỏi, caller và task. Mỗi câu hỏi có ID riêng, type và instructions; criteria phụ thuộc type.
+
+\begin{table}[H]
+\centering\small
+\renewcommand{\arraystretch}{1.15}
+\begin{tabularx}{\linewidth}{@{}YY@{}}
+\toprule
+\textbf{Đầu ra} & \textbf{Cách đọc} \\
+\midrule
+value / probabilities & Dự đoán và phân bố của nó, không phải sự thật đã xác minh. \\
+needs\_review / warnings & Gợi ý chính sách và giới hạn. false không cho phép tự hành động. \\
+usage / duration\_ms / trace\_id & Dữ liệu chẩn đoán request, không đánh giá tác vụ đã thành công. \\
+\bottomrule
+\end{tabularx}
+\caption{Các trường của response chuẩn hóa}
+\end{table}
+Đầu ra chuẩn hóa sai cấu trúc hoặc bị cắt sẽ bị từ chối. Ngân sách câu hỏi hiện tại là 512 token; giữ bằng chứng và tiêu chí ngắn gọn. Confidence tóm tắt phân bố, không phải xác suất đáp án đúng. \cite{r4}
+
+
+Với câu hỏi choice có $K$ nhãn, gọi $p_i$ là xác suất model trả cho nhãn $i$; $p_{(1)}$ và $p_{(2)}$ là hai giá trị lớn nhất. Nhãn dự đoán và độ chênh xác suất được tính như sau:
+\begin{equation}
+ \hat{y}=\operatorname*{arg\,max}_{1\le i\le K}p_i,
+ \qquad m=p_{(1)}-p_{(2)}.
+ \label{eq:choice}
+\end{equation}
+Triển khai hiện tại gắn cờ review cho câu hỏi choice khi
+\begin{equation}
+ r=\mathbf{1}\!\left[
+ p_{(1)}<0.85\;\lor\;m<0.25\;\lor\;\hat{y}\in\mathcal{U}
+ \right],
+ \label{eq:review}
+\end{equation}
+trong đó $\mathcal{U}$ gồm các nhãn được so khớp không phân biệt hoa thường: \texttt{unknown}, \texttt{other}, \texttt{review} và \texttt{uncertain}. Đây là heuristic của triển khai, chưa phải quy tắc chấp nhận được hiệu chỉnh theo dữ liệu. Noul và score luôn được gắn cờ review trong bản này. Cờ review bằng false không cấp quyền thực hiện hành động.
+
+Với ví dụ lỗi kết nối, $m=0.9976-0.0014=0.9962$. Hai điều kiện số trong Công thức~\eqref{eq:review} đều không thỏa, nhãn chọn cũng không thuộc $\mathcal{U}$, nên service trả \texttt{needs\_review=false}. Vẫn cần kiểm tra thực tế trước khi sửa hệ thống theo nhãn đó.
+
+\section{QUY TRÌNH LẬP TRÌNH}
+Tình huống: điều tra lỗi ứng dụng và sửa nhỏ nhất để hết lỗi mà không làm hỏng một luồng đang hợp lệ. Đây là phương pháp làm việc đề xuất, không phải chức năng service tự thực thi.
+
+\begin{figure}[H]
+\centering
+\resizebox{0.86\linewidth}{!}{%
+\begin{tikzpicture}
+\node[box] (n0) at (0,0) {1. Chốt mục tiêu\\tiêu chí quan sát được};
+\node[box] (n1) at (4.4,0) {2. Tái hiện\\giữ bằng chứng liên quan};
+\node[box] (n2) at (8.8,0) {3. Chọn phép kiểm\\code hoặc phán đoán ngắn};
+\node[box,fill=warmfill] (n3) at (8.8,-2.2) {4. Xem lại\\làm rõ phần chưa chắc};
+\node[box] (n4) at (4.4,-2.2) {5. Triển khai\\thay đổi nhỏ, đúng phạm vi};
+\node[box] (n5) at (0,-2.2) {6. Xác minh\\test và hành vi thực tế};
+\draw[arr] (n0) -- (n1);
+\draw[arr] (n1) -- (n2);
+\draw[arr] (n2) -- (n3);
+\draw[arr] (n3) -- (n4);
+\draw[arr] (n4) -- (n5);
+\draw[arr,dashed,draw=accentred] (n3.south) -- ++(0,-.6) -| (-2.1,-1.1) -- (4.4,-1.1) -- (n1.south);
+\end{tikzpicture}
+}
+\caption{Quy trình coding đề xuất. Trường hợp chưa chắc quay lại thu bằng chứng.}
+\end{figure}
+Nêu input gây lỗi, hành vi mong muốn và phần không được ảnh hưởng. Yêu cầu agent đọc code chịu trách nhiệm trước khi sửa.
+
+Giữ lệnh chính xác, output và log liên quan. Nếu test xác định đã chỉ ra điều kiện, dùng trực tiếp kết quả đó.
+
+Chỉ dùng Laya cho phần cần hiểu ý nghĩa. Hỏi biểu hiện nào được log cho thấy, không hỏi nguyên nhân gốc khi thiếu bằng chứng.
+
+Khi thiếu dữ kiện hoặc needs\_review=true, thu thêm thông tin. Nhãn có vẻ hợp lý cũng chỉ dùng để ưu tiên bước kiểm tra tiếp theo.
+
+Sửa trong phạm vi nhỏ, chạy lại ca lỗi và luồng không được ảnh hưởng, rồi báo cáo lệnh, kết quả và phần còn chưa chắc.
+
+\section{VÍ DỤ SỬ DỤNG}
+\begin{Code}
+./setup.sh
+\end{Code}
+Chạy trong checkout bằng user thường. Xem README của project để biết điều kiện cài đặt và triển khai. Mở phiên agent mới sau khi đăng ký global.
+
+\begin{table}[H]
+\centering\small
+\renewcommand{\arraystretch}{1.15}
+\begin{tabularx}{\linewidth}{@{}YY@{}}
+\toprule
+\textbf{Điểm truy cập} & \textbf{Đường dẫn mặc định} \\
+\midrule
+Trang test / Swagger & http://127.0.0.1:30765/  và  /docs \\
+MCP / REST chuẩn hóa & /mcp  và  POST /v1/decide \\
+Hướng dẫn cho agent & /llms.txt, /guide.md hoặc MCP laya\_guide \\
+\bottomrule
+\end{tabularx}
+\caption{Các điểm truy cập service}
+\end{table}
+\begin{Code}
+{
+  "state": "ConnectionError: database connection refused at localhost:5432.",
+  "questions": [{
+    "id": "category", "type": "choice",
+    "instructions":
+      "Classify only the failure directly shown by this log, not an unproven root cause.",
+    "criteria": {
+      "connectivity": "Cannot connect to a service",
+      "application": "Application logic or assertion failure",
+      "unknown": "Insufficient evidence"
+    }
+  }],
+  "caller": "codex", "task": "debug-db-connection"
+}
+\end{Code}
+\begin{Code}
+curl -fsS http://127.0.0.1:30765/v1/decide \
+  -H 'Content-Type: application/json' \
+  --data-binary @request.json
+\end{Code}
+Lưu JSON thành request.json. Có thể gửi cùng các trường qua laya\_decide hoặc Swagger. caller/task phục vụ truy vết, không xác thực danh tính.
+
+
+Phần tích hợp có thể dùng cờ review để chọn bước điều tra tiếp theo mà chưa thi hành hành động do model đề xuất:
+\begin{Code}
+decision = result["decisions"][0]
+if decision["needs_review"]:
+    next_step = "collect_more_evidence"
+elif decision["value"] == "connectivity":
+    next_step = "check_service_endpoint"
+else:
+    next_step = "inspect_application_log"
+print(next_step)
+\end{Code}
+Đoạn mã chỉ minh họa luồng điều khiển. Nó chưa xác minh service có hoạt động hay sửa ứng dụng. Với ca lỗi kết nối đã quan sát, bước tiếp theo là kiểm tra endpoint từ đúng môi trường nơi lỗi phát sinh.
+
+\section{KẾT QUẢ VÀ SAI SÓT}
+Phép quan sát ngày 04/10/2026 dùng ba mẫu do người viết chọn: mỗi mẫu một lượt warm-up và năm lượt đo. Nhãn kỳ vọng được chọn trước. Lặp lại không tạo thành mười lăm ca kiểm thử độc lập.
+
+\begin{figure}[H]
+\centering
+\resizebox{0.86\linewidth}{!}{%
+\begin{tikzpicture}
+\node[anchor=east,font=\small] at (0,0.0) {Yêu cầu hoàn tiền};
+\fill[lightfill] (.2,-0.17) rectangle (6.2,0.17);
+\fill[teal] (.2,-0.17) rectangle (6.2,0.17);
+\node[anchor=west,font=\small] at (6.4,0.0) {5/5};
+\node[anchor=east,font=\small] at (0,-0.8) {Lỗi kết nối};
+\fill[lightfill] (.2,-0.9700000000000001) rectangle (6.2,-0.63);
+\fill[teal] (.2,-0.9700000000000001) rectangle (6.2,-0.63);
+\node[anchor=west,font=\small] at (6.4,-0.8) {5/5};
+\node[anchor=east,font=\small] at (0,-1.6) {Mô tả lỗi mơ hồ};
+\fill[lightfill] (.2,-1.77) rectangle (6.2,-1.4300000000000002);
+\fill[accentred] (.2,-1.77) rectangle (0.26,-1.4300000000000002);
+\node[anchor=west,font=\small] at (6.4,-1.6) {0/5};
+\end{tikzpicture}
+}
+\caption{Số lượt trùng nhãn kỳ vọng trong năm lượt lặp; chỉ có ba mẫu riêng biệt.}
+\end{figure}
+
+\begin{table}[H]
+\centering\small
+\renewcommand{\arraystretch}{1.15}
+\begin{tabularx}{\linewidth}{@{}YYY@{}}
+\toprule
+\textbf{Mẫu} & \textbf{Kỳ vọng / thực tế} & \textbf{Review} \\
+\midrule
+Yêu cầu hoàn tiền rõ ràng & billing / billing & false \\
+Log connection refused & connectivity / connectivity & false \\
+"Có lỗi rồi, giúp tôi xử lý." & unknown / application & true \\
+\bottomrule
+\end{tabularx}
+\caption{Nhãn quan sát và cờ review}
+\end{table}
+\begin{Code}
+value: connectivity
+probabilities: connectivity=0.9976, application=0.0014, unknown=0.001
+margin: 0.9962
+needs_review: false
+warnings: [uncalibrated_for_your_task]
+advisory: true
+\end{Code}
+Nhãn lỗi kết nối phù hợp với log cung cấp. Nó không chứng minh database đã tắt. Cần kiểm tra listener, cấu hình endpoint và khả năng kết nối từ đúng môi trường thực thi trước khi quyết định sửa gì.
+
+Mẫu mơ hồ cho P(application)=0,6364 và P(unknown)=0,0988. Review flag có ích trong ca này, nhưng chưa chứng minh rằng mọi dự đoán sai đều được gắn cờ.
+
+\section{ĐÁNH GIÁ}
+\begin{figure}[H]
+\centering
+\resizebox{0.86\linewidth}{!}{%
+\begin{tikzpicture}
+\node[box] (n0) at (0,0) {Cùng input và tiêu chí\\cùng revision model};
+\node[box] (n1) at (4.4,0) {Đánh giá riêng\\đúng / sai / cần review};
+\node[box] (n2) at (8.8,0) {Áp dụng có chọn lọc\\đo lợi ích của cả tác vụ};
+\draw[arr] (n0) -- (n1);
+\draw[arr] (n1) -- (n2);
+\end{tikzpicture}
+}
+\caption{Quy trình đánh giá trước khi áp dụng dịch vụ quyết định.}
+\end{figure}
+\begin{Code}
+Đọc laya_guide một lần khi cần dùng service.
+Ưu tiên một câu hỏi choice ngắn, nhãn rõ ràng.
+Truyền caller và mục đích task thật.
+Xem kết quả là gợi ý; làm rõ phần chưa chắc.
+Dùng code và test cho điều kiện chính xác.
+Không thi hành chỉ vì model đồng ý.
+Không retry vô hạn hoặc tự fallback trả phí.
+\end{Code}
+So sánh tác vụ hoàn chỉnh có và không có lượt gọi quyết định bổ sung. Tính cả quyết định sai, công review, gọi lặp và thời gian khôi phục. Báo cáo này không khẳng định đã có phép so sánh năng suất end-to-end có kiểm soát.
+
+Tạo tập mẫu có đáp án riêng cho tác vụ, gồm dữ kiện thiếu và trường hợp ngoài phạm vi. Tách mẫu đánh giá khỏi mẫu dùng để chỉnh câu hỏi. Giữ tiêu chí và revision model cố định khi so các phương án.
+
+Service có log request ngắn gọn và chế độ debug JSON có giới hạn trong cấu hình triển khai. Dùng trace ID để nối request liên quan; không cộng thời gian request lồng nhau. Tránh đưa credential hoặc nội dung riêng tư vào dữ liệu test.
+
+Giao diện tương thích không đồng nghĩa chất lượng model tương đương. Model card multilingual của Laya ghi nhận các giới hạn về hiệu chỉnh xác suất và chấm điểm. \cite{r3}
+
+
+Cần đo hành vi review riêng với độ đúng của dự đoán. Đặt $a_i=1$ nếu trường hợp $i$ được tiếp tục mà không cần review thêm, và $a_i=0$ nếu ngược lại. Độ bao phủ và tỷ lệ lỗi trên các trường hợp được chấp nhận là
+\begin{equation}
+ C=\frac{\sum_{i=1}^{N}a_i}{N},
+ \qquad R=\frac{\sum_{i=1}^{N}a_i\,\mathbf{1}[\hat{y}_i\ne y_i]}{\sum_{i=1}^{N}a_i}.
+ \label{eq:coverage}
+\end{equation}
+$R$ chỉ xác định khi có ít nhất một trường hợp được chấp nhận. Báo cáo cả hai đại lượng giúp thấy sự đánh đổi giữa chấp nhận nhiều trường hợp hơn và chấp nhận dự đoán sai; đây là vấn đề được nghiên cứu trong dự đoán có từ chối~\cite{r9}.
+
+Nếu ba mẫu riêng biệt trong báo cáo được chấp nhận khi \texttt{needs\_review=false}, độ bao phủ sẽ là $C=2/3$ và tỷ lệ lỗi quan sát trên phần chấp nhận là $R=0/2$. Mẫu còn lại được chuyển sang review. Các số đếm chỉ mô tả ba mẫu đó, không đủ để xác lập ngưỡng triển khai hay ước lượng độ chính xác chung.
+
+\section{GIỚI HẠN}
+Khảo sát tường thuật này hỗ trợ lựa chọn tích hợp nhưng chưa tạo thành benchmark tổng quát. Số mẫu quan sát quá ít để ước lượng độ chính xác. Nội dung và thiết kế riêng của báo cáo được ghi nhận cho AIAI Laboratory và htrnguyen; model, mã nguồn và công bố tham khảo giữ tác giả gốc.
+\clearpage
+\input{references.tex}
+\end{document}

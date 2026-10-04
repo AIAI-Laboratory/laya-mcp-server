@@ -1,0 +1,50 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{report-style}[2026/10/04 Laya application survey]
+\usepackage[a4paper,margin=24mm,headheight=28pt,headsep=14pt]{geometry}
+\usepackage{fontspec}
+\setmainfont{Noto Serif}
+\setsansfont{Noto Sans}
+\setmonofont{Liberation Mono}[Scale=0.90]
+\usepackage{graphicx,xcolor,booktabs,tabularx,array,float,amsmath,ragged2e}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,calc}
+\usepackage{fvextra,needspace}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{caption}
+\usepackage[unicode,colorlinks=true,linkcolor=ink,citecolor=teal,urlcolor=teal]{hyperref}
+\definecolor{ink}{HTML}{172536}
+\definecolor{teal}{HTML}{087C79}
+\definecolor{rulegray}{HTML}{CBD5DC}
+\definecolor{lightfill}{HTML}{F1F5F7}
+\definecolor{warmfill}{HTML}{FFF3E8}
+\definecolor{accentred}{HTML}{EF4035}
+\color{ink}
+\AtBeginDocument{\justifying}
+\setlength{\parindent}{1em}
+\setlength{\parskip}{0.35em}
+\setlength{\emergencystretch}{2em}
+\renewcommand{\baselinestretch}{1.08}
+\titleformat{\section}{\large\bfseries}{\thesection}{0.6em}{}
+\titleformat{\subsection}{\normalsize\bfseries}{\thesubsection}{0.6em}{}
+\titlespacing*{\section}{0pt}{14pt}{6pt}
+\titlespacing*{\subsection}{0pt}{9pt}{4pt}
+\pretocmd{\section}{\Needspace{8\baselineskip}}{}{}
+\captionsetup{font=small,labelfont=bf,skip=5pt,width=0.9\linewidth,justification=justified,singlelinecheck=false}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\sffamily\scriptsize LAYA MCP SERVER | APPLICATION SURVEY}
+\fancyhead[R]{\sffamily\scriptsize 2026-10-04}
+\fancyfoot[C]{\small\thepage}
+\renewcommand{\headrulewidth}{0.3pt}
+\fancypagestyle{firstpage}{
+ \fancyhf{}
+ \fancyhead[L]{\includegraphics[width=76pt]{../assets/Dark_Logo_slogan.png}}
+ \fancyhead[R]{\sffamily\scriptsize 2026-10-04}
+ \fancyfoot[C]{\small\thepage}
+}
+\DefineVerbatimEnvironment{Code}{Verbatim}{fontsize=\small,breaklines=true,breakanywhere=true,frame=single,rulecolor=\color{rulegray},framesep=6pt}
+\BeforeBeginEnvironment{Code}{\par\noindent\begin{minipage}{\linewidth}}
+\AfterEndEnvironment{Code}{\end{minipage}\par\medskip}
+\newcolumntype{Y}{>{\justifying\arraybackslash}X}
+\tikzset{box/.style={draw=rulegray,fill=lightfill,rounded corners=2pt,align=center,text width=3.35cm,minimum height=1.1cm,font=\sffamily\small},arr/.style={-{Stealth[length=2mm]},draw=teal,line width=.7pt}}
