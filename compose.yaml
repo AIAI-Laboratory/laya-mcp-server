@@ -1,0 +1,42 @@
+name: laya-mcp-server
+services:
+  laya:
+    build: .
+    image: laya-mcp-server:${LAYA_VERSION:-0.1.0}-cpu
+    container_name: laya-mcp-server-cpu
+    user: "${LOCAL_UID:-1000}:${LOCAL_GID:-1000}"
+    ports:
+      - "127.0.0.1:${LAYA_PORT:-30765}:8000"
+    volumes:
+      - ./data:/data
+    environment:
+      HOME: /data
+      LAYA_PUBLIC_URL: "http://127.0.0.1:${LAYA_PORT:-30765}"
+      LAYA_LOG_FORMAT: "${LAYA_LOG_FORMAT:-compact}"
+      LAYA_LOG_BODY_LIMIT: "${LAYA_LOG_BODY_LIMIT:-16384}"
+      LAYA_DEVICE: cpu
+      LAYA_THREADS: "${LAYA_THREADS:-4}"
+      OMP_NUM_THREADS: "${LAYA_THREADS:-4}"
+      LAYA_PRELOAD: "1"
+      LAYA_MODELS: multilingual
+      LAYA_DEFAULT_MODEL: multilingual
+      LAYA_MAX_LOADED: "1"
+      LAYA_MAX_CONCURRENT: "1"
+      LAYA_MAX_TOKEN_BUDGET: "${LAYA_MAX_TOKEN_BUDGET:-1024}"
+      LAYA_REVISION: reviewed
+    cpus: "${LAYA_CPUS:-4}"
+    mem_limit: "${LAYA_MEMORY:-4g}"
+    memswap_limit: "${LAYA_MEMORY:-4g}"
+    init: true
+    restart: always
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "2"
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10m
