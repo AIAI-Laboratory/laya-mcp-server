@@ -1,5 +1,11 @@
-<p align="center"><img src="assets/logo.png" alt="Laya MCP Server" width="128"></p>
-<h1 align="center">Laya MCP Server</h1>
+<p align="center">
+  <img src="assets/logo.png" alt="Laya MCP Server" width="40"> &nbsp;
+  <a href="https://aisq.science/"><picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/Light_Logo_name.png">
+    <img src="assets/Dark_Logo_slogan.png" alt="AIAI Laboratory" width="150">
+  </picture></a>
+</p>
+<h1 align="center">LAYA MCP SERVER</h1>
 <p align="center">
   <img alt="Version 0.1.0" src="https://img.shields.io/badge/version-0.1.0-0d9488">
   <a href="LICENSE"><img alt="Apache 2.0 license" src="https://img.shields.io/badge/license-Apache--2.0-blue"></a>
@@ -11,9 +17,9 @@
 **Model quyết định chạy CPU cho AI agent.** Một container, một model, một lệnh setup.
 Có MCP, REST, Swagger và giao diện test. Không GPU, API trả phí, database hoặc chia dev/prod.
 
-Tác giả **[htrnguyen](https://github.com/htrnguyen)** · [English](README.md)
+Tác giả **[htrnguyen](https://www.htrnguyen.id.vn/)** · [English](README.md)
 
-## Chạy
+## CHẠY
 
 Cần **Linux/systemd, Docker Compose v2+, Python 3 và [uv](https://docs.astral.sh/uv/getting-started/installation/)**.
 Chạy bằng user thường có quyền sudo; không thêm sudo trước lệnh dưới.
@@ -38,7 +44,7 @@ Chọn target: thêm `--targets codex,claude`; xem trước: `./setup.sh --dry-r
 Installer giữ các MCP khác, backup trước khi sửa và không tạo trùng.
 Skill liên kết tới folder project, vì vậy không di chuyển/xóa checkout sau cài.
 
-## Sử dụng
+## SỬ DỤNG
 
 > Đọc laya_guide, dùng laya_decide phân loại “Tôi bị trừ tiền hai lần và cần hoàn tiền”.
 > Truyền caller/task và hiển thị kết quả tool thật.
@@ -57,7 +63,7 @@ REST mới: `POST /v1/decide`; REST raw cũ: `/v1/systemone`.
 Trang test/Swagger có ví dụ. Agent đọc tài liệu qua `/llms.txt`, `/guide.md`, `/skill.md`, `/rules.md`,
 `/integrations.json`, `/openapi.json` hoặc MCP resource `laya://guide`.
 
-## Cấu hình, log và dữ liệu
+## CẤU HÌNH, LOG VÀ DỮ LIỆU
 
 Sửa `.env` rồi chạy lại setup. Mặc định nằm trong [.env.example](.env.example).
 
@@ -78,7 +84,7 @@ Không cộng thời gian MCP với request REST lồng bên trong.
 Setup dọn log file cũ sau khi triển khai thành công. `restart: always` chỉ áp dụng khi container còn tồn tại;
 sau `compose down` cần setup/up lại.
 
-## Giới hạn và kiểm tra
+## GIỚI HẠN VÀ KIỂM TRA
 
 Chỉ dùng local, không có xác thực; không public cổng ra LAN/Internet.
 Log JSON có thể chứa văn bản riêng tư. Xác suất cao không đảm bảo đúng, không thay test, phép tính hay phân quyền.
@@ -93,20 +99,10 @@ python3 scripts/benchmark.py --runs 100
 Smoke test cũ trên Ryzen 5 5600H, 4 threads: p50 **103 ms**, p95 **116 ms** với sáu mẫu ngắn lặp lại.
 Không coi đây là cam kết chất lượng/tốc độ chung hoặc kết quả API nhiều câu hỏi mới.
 
-## Nguồn và giấy phép
+## NGUỒN VÀ GIẤY PHÉP
 
 Xem [nguồn đầy đủ](README.md#sources--license): Laya/Convai Innovations, MCP SDK, FastAPI,
 PyTorch, Transformers, Swagger UI, Docker và uv. Bài Jev chỉ là tham khảo kiến trúc.
 
 Tác giả tích hợp: **htrnguyen** · [Apache-2.0](LICENSE) · [NOTICE](NOTICE) · [CHANGELOG](CHANGELOG.md).
 Project không thuộc TypeSafe, không phân phối Jev hoặc khẳng định chất lượng tương đương.
-
-## Cài lại sạch
-
-```bash
-./setup.sh --reset
-```
-
-Chỉ xóa container/image Laya thuộc checkout này, MCP/skill đã đăng ký, model/cache, reports và backup;
-giữ source và .env. Sau đó build không dùng layer cache, tải lại model, test HTTP/MCP,
-restart riêng service và kiểm tra lần nữa. Không prune Docker toàn máy. Cần nhập sudo trong terminal.

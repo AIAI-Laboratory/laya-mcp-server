@@ -1,5 +1,11 @@
-<p align="center"><img src="assets/logo.png" alt="Laya MCP Server" width="128"></p>
-<h1 align="center">Laya MCP Server</h1>
+<p align="center">
+  <img src="assets/logo.png" alt="Laya MCP Server" width="40"> &nbsp;
+  <a href="https://aisq.science/"><picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/Light_Logo_name.png">
+    <img src="assets/Dark_Logo_slogan.png" alt="AIAI Laboratory" width="150">
+  </picture></a>
+</p>
+<h1 align="center">LAYA MCP SERVER</h1>
 <p align="center">
   <img alt="Version 0.1.0" src="https://img.shields.io/badge/version-0.1.0-0d9488">
   <a href="LICENSE"><img alt="Apache 2.0 license" src="https://img.shields.io/badge/license-Apache--2.0-blue"></a>
@@ -11,9 +17,9 @@
 **Local CPU decisions for AI agents.** One container, one model, one setup command.
 MCP, REST, Swagger and a test console. No GPU, paid API, database or dev/prod profiles.
 
-By **[htrnguyen](https://github.com/htrnguyen)** · [Tiếng Việt](README.vi.md)
+By **[htrnguyen](https://www.htrnguyen.id.vn/)** · [Tiếng Việt](README.vi.md)
 
-## Start
+## START
 
 Requires **Linux/systemd, Docker Compose v2+, Python 3 and [uv](https://docs.astral.sh/uv/getting-started/installation/)**.
 Use a normal account with sudo access. First startup downloads dependencies/model weights.
@@ -39,7 +45,7 @@ Select clients with `--targets codex,claude`; preview registration with `--dry-r
 The installer backs up changed configs, preserves other entries and avoids duplicates.
 The global skill links to this checkout: keep its location stable.
 
-## Use
+## USE
 
 > Read laya_guide, then use laya_decide to classify “I was charged twice and need a refund.”
 > Include caller/task and show the tool result.
@@ -60,7 +66,7 @@ review flags, usage, timing and trace ID. Raw `/v1/systemone` remains available.
 Examples are in the console and Swagger. Agents can read `/llms.txt`, `/guide.md`, `/skill.md`,
 `/rules.md`, `/integrations.json`, `/openapi.json`, or MCP resource `laya://guide`.
 
-## Configure & operate
+## CONFIGURE & OPERATE
 
 Edit `.env`, then rerun setup. Defaults are in [.env.example](.env.example).
 Main settings: `LAYA_PORT=30765`, `LAYA_THREADS=4`, `LAYA_CPUS=4`, `LAYA_MEMORY=4g`.
@@ -83,7 +89,7 @@ config backups are ignored by Git. No persistent application log folder is neede
 setup removes old request log files only after successful deployment.
 `restart: always` needs an existing container; after `compose down`, run setup again.
 
-## Limits & checks
+## LIMITS & CHECKS
 
 This is a **trusted local-only service**, without authentication. Do not expose it directly to LAN/Internet.
 Logs in JSON mode may contain private text. Structured credential keys are redacted; free-form secrets are not.
@@ -100,7 +106,7 @@ An earlier six-case repeated CPU smoke test measured p50 **103 ms**, p95 **116 m
 (4 threads, 100 warm calls). Not an accuracy guarantee or a benchmark of the multi-question API.
 Full container rebuild/reboot and browser interaction must be verified on the target host.
 
-## Sources & license
+## SOURCES & LICENSE
 
 - **[Laya / Convai Innovations](https://github.com/NandhaKishorM/laya)** — upstream runtime;
   [pinned commit](https://github.com/NandhaKishorM/laya/tree/2e4d9c87e8b1621deb344eac7de5c7258f32f849),
@@ -120,7 +126,3 @@ Integration author: **htrnguyen**. [Apache-2.0](LICENSE) · [NOTICE](NOTICE) · 
 Original Laya/Swagger licenses remain with their code. Model weights are not committed.
 This project is not affiliated with TypeSafe and does not claim equivalent quality to Jev.
 Direct dependencies are pinned; base-image/transitive dependencies are not fully locked.
-
-## Clean reinstall
-
-`./setup.sh --reset` removes only this checkout's Laya containers/images, global MCP entries/skill links, model/cache data, reports and backups, then rebuilds without layer cache and runs setup again. Source and `.env` remain. Other Docker projects and shared Docker build cache are not pruned. Requires sudo in your terminal.

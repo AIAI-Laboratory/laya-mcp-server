@@ -3,7 +3,7 @@ name: laya-mcp-server
 description: Use the local Laya MCP for bounded text decisions: classification, routing, relevance, yes/no checks and experimental ordinal scoring. Use when the user requests Laya or when a narrow classification benefits from a separate local model.
 ---
 
-# Local Laya decisions
+# LOCAL LAYA DECISIONS
 
 Read `laya_guide` or MCP resource `laya://guide` once when the task needs the service.
 Use `laya_decide` for the normalized typed response; keep `laya_classify` for existing integrations.
