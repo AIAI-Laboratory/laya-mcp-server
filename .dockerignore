@@ -39,3 +39,9 @@ dist
 **/*.key
 .DS_Store
 Thumbs.db
+
+# Shareable reports are not runtime assets.
+output
+
+# Documentation source is not a runtime dependency.
+latex

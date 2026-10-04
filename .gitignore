@@ -53,3 +53,15 @@ pytorch_model*.bin
 .vscode/
 .DS_Store
 Thumbs.db
+
+# LaTeX intermediates; published PDFs and editable sources remain tracked.
+/latex/build/
+*.aux
+*.toc
+*.out
+*.bbl
+*.blg
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.xdv
