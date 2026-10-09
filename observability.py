@@ -48,9 +48,10 @@ class CompactFormatter(logging.Formatter):
             return json.dumps(value[:limit] + ("…" if len(value)>limit else ""), ensure_ascii=False)
         stamp = str(row.get("timestamp", ""))[11:23] + "Z"
         name = row.get("tool") or row.get("path")
+        task_label = {"laya_route_task": "route_request", "laya_route_subtask": "subtask_request"}.get(row.get("tool"), row.get("task"))
         line = (f"{stamp} {'OK' if row.get('success') else 'ERROR'} {row.get('transport')} {name} "
                 f"status={row.get('status')} {row.get('duration_ms', 0):.1f}ms "
-                f"caller={short(row.get('caller'),32)} task={short(row.get('task'))}")
+                f"caller={short(row.get('caller'),32)} task={short(task_label)}")
         if choice is not None:
             line += f" result={short(choice)}"
         line += f" trace={str(row.get('trace_id',''))[:12]}"

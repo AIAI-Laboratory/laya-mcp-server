@@ -10,6 +10,7 @@ COPY requirements.txt /app/requirements.txt
 COPY vendor/laya /app/laya
 RUN pip install -r /app/requirements.txt '/app/laya[serve,mcp]' && pip check && pip freeze > /app/build-packages.txt
 COPY server.py web_docs.py mcp_http.py observability.py decisions.py /app/
+COPY routing /app/routing
 COPY VERSION /app/VERSION
 COPY scripts/verify_mcp.py /app/scripts/verify_mcp.py
 COPY static /app/static

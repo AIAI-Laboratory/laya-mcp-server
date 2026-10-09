@@ -1,7 +1,5 @@
 # Test helpers only; no model/torch installation required.
 fastapi==0.142.2
 httpx==0.28.1
-tomlkit==0.15.1
-json5==0.15.0
 mcp==2.3.0
 uvicorn==0.54.0

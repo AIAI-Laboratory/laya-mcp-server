@@ -14,23 +14,21 @@
   <img alt="MCP Streamable HTTP" src="https://img.shields.io/badge/MCP-Streamable_HTTP-334155">
 </p>
 
-**Model quyết định chạy CPU cho AI agent.** Một container, một model, một lệnh setup.
-Có MCP, REST, Swagger và giao diện test. Không GPU, API trả phí, database hoặc chia dev/prod.
+**Model quyết định CPU và MCP route coordination thuần MCP.** Một container, một model.
+Có MCP, REST, Swagger và giao diện test. Không GPU hay API trả phí.
 
 Tác giả **[htrnguyen](https://www.htrnguyen.id.vn/)** · [English](README.md)
 
 ## CHẠY
 
-Cần **Linux/systemd, Docker Compose v2+, Python 3 và [uv](https://docs.astral.sh/uv/getting-started/installation/)**.
-Chạy bằng user thường có quyền sudo; không thêm sudo trước lệnh dưới.
-Lần đầu tải thư viện/model. Mặc định giới hạn 4 CPU, 4 GiB RAM, không swap.
+Yêu cầu Docker Compose v2+. Khởi chạy MCP thuần, không đăng ký client toàn cục:
 
 ```bash
-./setup.sh
+docker compose up -d --build
 ```
 
-Script bật Docker lúc boot, chạy service, test MCP và đăng ký global cho Claude Code, Codex, OpenCode tìm thấy.
-Sau đó mở phiên agent mới. Global áp dụng mọi project của cùng user trên máy này.
+Lần đầu tải dependencies và model. Service giữ giới hạn 4 CPU, 4 GiB RAM, bind loopback-only.
+Setup chỉ chạy service cục bộ, không sửa cấu hình MCP của client.
 
 | Chức năng | URL |
 |---|---|
@@ -39,10 +37,7 @@ Sau đó mở phiên agent mới. Global áp dụng mọi project của cùng us
 | MCP HTTP | http://127.0.0.1:30765/mcp |
 | Health | http://127.0.0.1:30765/health |
 
-Chỉ đăng ký lại agent: `./setup.sh --register-only`.
-Chọn target: thêm `--targets codex,claude`; xem trước: `./setup.sh --dry-run`.
-Installer giữ các MCP khác, backup trước khi sửa và không tạo trùng.
-Skill liên kết tới folder project, vì vậy không di chuyển/xóa checkout sau cài.
+MCP endpoint mặc định: `http://127.0.0.1:30765/mcp`.
 
 ## SỬ DỤNG
 
@@ -55,6 +50,10 @@ Skill liên kết tới folder project, vì vậy không di chuyển/xóa checko
 | `laya_status` | Model, thiết bị, revision |
 | `laya_decide` | 1–3 câu hỏi có kiểu dữ liệu, output chuẩn hóa |
 | `laya_classify` | Giữ cách phân loại đơn cũ |
+| `laya_route_task` / `laya_route_subtask` | Route task/subtask từ candidates caller gửi; chỉ khuyến nghị |
+| `laya_capability_search` / `laya_get_route` | Tìm registry metadata và xem route theo trace |
+| `laya_report_execution` | Self-report từ MCP, luôn đánh dấu chưa xác minh |
+| `laya_get_routing_policy` / `laya_update_routing_policy` | Đọc/sửa policy route cục bộ |
 
 Choice chọn 2–10 nhãn. Noul trả xác suất đúng/sai. Score chấm theo các mô tả có thứ tự,
 **còn thử nghiệm**. Noul/score luôn cần xem lại. Để nhanh, ưu tiên input ngắn và một câu hỏi.

@@ -15,6 +15,14 @@ Not for open-ended answers, code generation, summaries, arithmetic, counting, re
 large file analysis or multi-hop reasoning. Use deterministic code first where it suffices.
 Installing MCP does not intercept shell commands or automatically switch the agent's primary model.
 
+Coding routes are advisory planning tools: `laya_route_task` accepts a short `task_summary`, request ID,
+workspace/session metadata, and caller-supplied model/skill/MCP candidates. `laya_route_subtask` additionally
+accepts `parent_trace_id`. `laya_capability_search` searches only the candidates supplied to that call;
+`laya_get_route` retrieves a route by trace/route/request ID. No tool executes shell commands or starts an agent.
+`laya_report_execution` records the caller's self-report as unverified. Never use it as proof of execution or
+as a permission decision. `laya_get_routing_policy` and `laya_update_routing_policy` read or change only
+the local advisory-routing preferences; permission escalation and prompt storage remain forbidden.
+
 ## INPUT CONTRACT
 laya_decide(state, questions, caller, task). state: nonempty string, at most 4000 characters.
 Each question has unique id, type and instructions. choice requires criteria object (2-10 labels).
@@ -40,9 +48,9 @@ On overload/timeouts, report the condition and continue with the main agent when
 No automatic paid fallback and no unbounded retries. On invalid input, shorten or fix it once.
 
 ## EXAMPLE: ROUTING
-{"state":"I was charged twice and need a refund.","questions":[{"id":"route","type":"choice","instructions":"Route this request by its main issue.","criteria":{"billing":"Payments, invoices, refunds","account":"Login and password","unknown":"Insufficient evidence or another issue"}}],"caller":"codex","task":"support-triage"}
+{"state":"I was charged twice and need a refund.","questions":[{"id":"route","type":"choice","instructions":"Route this request by its main issue.","criteria":{"billing":"Payments, invoices, refunds","account":"Login and password","unknown":"Insufficient evidence or another issue"}}],"caller":"mcp-client","task":"support-triage"}
 
 ## DEPLOYMENT AND PRIVACY
-Loopback only, trusted local user, no authentication. Setup registers user-global clients and shared skill.
-Start a fresh agent session after config changes. In JSON debug mode, input/output go to Docker stdout with size limits;
+Loopback only, trusted local user. No client configuration is installed by default.
+In JSON debug mode, input/output go to Docker stdout with size limits;
 free-form text may contain sensitive data. Do not submit credentials. Model judgments can be wrong.

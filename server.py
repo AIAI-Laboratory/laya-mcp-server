@@ -12,6 +12,8 @@ from decisions import configure_decisions
 configure_decisions(app)
 from web_docs import configure_docs
 configure_docs(app)
+from routing import configure_routing
+configure_routing(app)
 # Reject automatic routing to a second checkpoint to avoid CPU reload thrashing.
 from fastapi import Request
 from fastapi.responses import JSONResponse

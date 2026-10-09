@@ -2,7 +2,7 @@ name: laya-mcp-server
 services:
   laya:
     build: .
-    image: laya-mcp-server:${LAYA_VERSION:-0.1.0}-cpu
+    image: ${LAYA_IMAGE:-laya-mcp-server:${LAYA_VERSION:-0.1.0}-cpu}
     container_name: laya-mcp-server-cpu
     user: "${LOCAL_UID:-1000}:${LOCAL_GID:-1000}"
     ports:
@@ -11,6 +11,7 @@ services:
       - ./data:/data
     environment:
       HOME: /data
+      LAYA_ROUTING_DB: /data/laya-routing.sqlite3
       LAYA_PUBLIC_URL: "http://127.0.0.1:${LAYA_PORT:-30765}"
       LAYA_LOG_FORMAT: "${LAYA_LOG_FORMAT:-compact}"
       LAYA_LOG_BODY_LIMIT: "${LAYA_LOG_BODY_LIMIT:-16384}"

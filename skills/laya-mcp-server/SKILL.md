@@ -10,12 +10,14 @@ Use `laya_decide` for the normalized typed response; keep `laya_classify` for ex
 Choice is the preferred default. Noul and score always need review; do not treat them as validated gates.
 Docs and copyable client settings are also served at `/guide.md` and `/integrations.json`.
 
-Use the registered `laya` MCP tools (`laya_status`, `laya_classify`, `laya_decide`, `laya_guide`; client prefixes vary).
+Use the registered `laya` MCP tools (`laya_status`, `laya_classify`, `laya_decide`, `laya_guide`,
+`laya_route_task`, `laya_route_subtask`, `laya_capability_search`, `laya_get_route`,
+`laya_report_execution`, `laya_get_routing_policy`, `laya_update_routing_policy`; client prefixes vary).
 No API key or Docker access is needed in the agent. The shared model runs locally on CPU.
 
 - Call `laya_classify` with a short relevant `text`, 2–10 `labels` mapping IDs to clear descriptions,
   and focused `instructions`. Include an unknown/review label when the evidence can be insufficient.
-- Set `caller` to the actual client name (codex, claude-code, opencode, etc.).
+- Set `caller` to the actual MCP client name.
   Set `task` to the current task ID or a short purpose; do not invent user identity.
 - Keep inputs short. The service uses multilingual with a 512-token budget and refuses truncated results.
   Avoid repeatedly sending whole files or calling it for every step.
@@ -23,6 +25,9 @@ No API key or Docker access is needed in the agent. The shared model runs locall
   act_probability authorizes editing, deleting, merging, or deploying. Use tests for deterministic claims.
 - For connectivity problems, call `laya_status`. If unavailable or rejected, report it and continue
   using the main agent where appropriate; do not loop retries or switch to paid cloud providers.
+- Coding route tools return advisory metadata and do not execute commands or start an agent. Pass a short
+  `task_summary` and only the model/skill/MCP candidates available to this MCP caller.
+  `laya_report_execution` is an unverified self-report, not proof that work ran.
 
 Example arguments:
 ```json
@@ -34,10 +39,10 @@ Example arguments:
     "unknown": "Insufficient evidence or another category"
   },
   "instructions": "Classify the support request by its main issue.",
-  "caller": "codex",
+  "caller": "mcp-client",
   "task": "support-triage"
 }
 ```
 
 Use the client-configured MCP endpoint. Do not create a second server or load another model.
-Skill instructions alone do not register MCP: run the project's `./setup.sh --register-only` when installing.
+Skill instructions alone do not register MCP. Use the MCP endpoint configured for this client.

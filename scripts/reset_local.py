@@ -33,12 +33,11 @@ for image in ["laya-local:0.3.26-cpu","laya-mcp-server:"+(root/"VERSION").read_t
     if docker("image","inspect",image,check=False).returncode==0:
         result=docker("image","rm",image,check=False)
         print("Removed image:" if result.returncode==0 else "Retained image (still referenced):",image,flush=True)
-# No global Docker prune: shared build cache and other projects remain intact.
-subprocess.run(["uv","--cache-dir",str(root/"data/reset-cache"),"run","--no-project","--with","tomlkit==0.15.1","--with","json5==0.15.0","python",str(root/"scripts/register_global.py"),"--remove-local"],check=True,cwd=root)
+# No global Docker prune or MCP client configuration changes.
 for name in ["data","reports","backups"]:
     folder=root/name
     if folder.is_symlink():raise SystemExit(f"Refusing to delete symlink: {folder}")
     if folder.exists():shutil.rmtree(folder)
 old=root.parent/"laya-local"
 if old.is_symlink() and old.resolve()==root:old.unlink()
-print("Cleaned Laya runtime, model/setup cache, reports, backups and global registrations. Source/.env retained.",flush=True)
+print("Cleaned Laya runtime, model/setup cache, reports and backups. Source/.env and client configuration retained.",flush=True)

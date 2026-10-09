@@ -2,6 +2,7 @@
 from contextlib import asynccontextmanager
 from pathlib import Path
 from decisions import DecisionRequest, Question, DecisionResponse, evaluate, backend_request, BackendError
+from routing.router import capability_search
 from mcp.server.mcpserver import MCPServer
 from mcp.server.mcpserver.exceptions import ToolError
 
@@ -53,6 +54,78 @@ def attach_mcp(app, backend="http://127.0.0.1:8000"):
     @mcp.resource("laya://guide")
     def agent_guide() -> str:
         return laya_guide()
+
+    def route_payload(task: str, request_id: str, kind: str, workspace_id: str,
+                      session_id: str, current_model: str, explicit_model: str,
+                      available_models: list[str], available_skills: list[str],
+                      skill_metadata: list[dict], available_mcp_capabilities: list[str],
+                      mcp_metadata: list[dict]) -> dict:
+        return {"schema_version": "1.0", "request_id": request_id or __import__("uuid").uuid4().hex,
+                "task": {"text": task, "source": "mcp", "kind": kind},
+                "environment": {"workspace_id": workspace_id or None, "session_id": session_id or None,
+                                "current_model": current_model or None, "explicit_model": explicit_model or None},
+                "constraints": {"available_models": available_models, "available_skills": available_skills,
+                                "skill_metadata": skill_metadata,
+                                "available_mcp_capabilities": available_mcp_capabilities,
+                                "mcp_metadata": mcp_metadata}}
+
+    @mcp.tool()
+    async def laya_route_task(task_summary: str, request_id: str = "", kind: str = "user_task",
+                              workspace_id: str = "", session_id: str = "", current_model: str = "",
+                              explicit_model: str = "", available_models: list[str] | None = None,
+                              available_skills: list[str] | None = None,
+                              skill_metadata: list[dict] | None = None,
+                              available_mcp_capabilities: list[str] | None = None,
+                              mcp_metadata: list[dict] | None = None) -> dict:
+        """Return a deterministic advisory route for a coding task; does not execute it."""
+        payload = route_payload(task_summary, request_id, kind, workspace_id, session_id, current_model,
+                                explicit_model, available_models or [], available_skills or [],
+                                skill_metadata or [], available_mcp_capabilities or [], mcp_metadata or [])
+        return await request("/api/v1/routes", payload)
+
+    @mcp.tool()
+    async def laya_route_subtask(task_summary: str, parent_trace_id: str, request_id: str = "",
+                                 workspace_id: str = "", available_skills: list[str] | None = None,
+                                 skill_metadata: list[dict] | None = None) -> dict:
+        """Route a bounded subtask and retain its parent trace reference."""
+        payload = route_payload(task_summary, request_id, "subtask", workspace_id, parent_trace_id, "", "", [],
+                                available_skills or [], skill_metadata or [], [], [])
+        return await request("/api/v1/routes", payload)
+
+    @mcp.tool()
+    async def laya_capability_search(query: str, candidates: list[dict], limit: int = 8) -> dict:
+        """Search only the skill/MCP candidates supplied in this MCP request."""
+        try:
+            return capability_search(query, candidates, limit)
+        except ValueError as exc:
+            raise ToolError(str(exc)) from exc
+
+    @mcp.tool()
+    async def laya_get_route(trace_id: str) -> dict:
+        """Retrieve a previously recorded route using its route ID or request ID."""
+        from urllib.parse import quote
+        return await request(f"/api/v1/routes/{quote(trace_id, safe='')}")
+
+    @mcp.tool()
+    async def laya_report_execution(trace_id: str, status: str, details: dict | None = None) -> dict:
+        """Record this MCP caller's unverified self-report against a known route trace."""
+        if status not in {"started", "completed", "failed"}:
+            raise ToolError("status must be started, completed, or failed")
+        store = app.state.routing_store
+        try:
+            return store.report_execution(trace_id, status, details)
+        except ValueError as exc:
+            raise ToolError(str(exc)) from exc
+
+    @mcp.tool()
+    async def laya_get_routing_policy() -> dict:
+        """Read the local advisory-routing policy."""
+        return await request("/api/v1/config")
+
+    @mcp.tool()
+    async def laya_update_routing_policy(patch: dict) -> dict:
+        """Update bounded route preferences only; permission escalation and prompt storage remain forbidden."""
+        return await request("/api/v1/config", patch)
 
     transport = mcp.streamable_http_app(streamable_http_path="/mcp", stateless_http=True, json_response=True,
                                         max_request_body_size=65536)

@@ -3,48 +3,22 @@ import json
 import logging
 from pathlib import Path
 import sys
-import tempfile
-from unittest.mock import patch
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-sys.path.insert(0, str(ROOT / "scripts"))
-import register_global as installer
 from observability import AccessFilter, CompactFormatter, ConsoleFilter, body_value, LIMIT
 
 
-class InstallerTests(unittest.TestCase):
-    def test_merge_is_idempotent_and_preserves_other_settings(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            root=Path(tmp)
-            paths={"codex":root/"codex.toml", "claude":root/"claude.json", "opencode":root/"opencode.jsonc"}
-            paths["codex"].write_text('# keep comment\nmodel="existing"\n[mcp_servers.other]\nurl="http://other"\n')
-            paths["claude"].write_text('{"keep":true,"mcpServers":{"other":{"url":"http://other"}}}')
-            paths["opencode"].write_text('{// comment\n"theme":"existing","mcp":{},}')
-            for path,before,after in installer.plan_configs(paths,list(paths),"http://127.0.0.1:30765/mcp"):
-                installer.atomic_write(path,after)
-            self.assertEqual(installer.plan_configs(paths,list(paths),"http://127.0.0.1:30765/mcp"),[])
-            self.assertIn("# keep comment",paths["codex"].read_text())
-            self.assertEqual(installer.tomlkit.parse(paths["codex"].read_text())["mcp_servers"]["other"]["url"],"http://other")
-            self.assertTrue(json.loads(paths["claude"].read_text())["keep"])
-            self.assertEqual(json.loads(paths["opencode"].read_text())["theme"],"existing")
-
-    def test_auto_with_no_agents_keeps_service_setup_usable(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            with patch.dict(installer.os.environ, {}, clear=True), patch.object(installer.Path, "home", return_value=Path(tmp)), patch.object(installer.shutil, "which", return_value=None), patch.object(installer, "probe", return_value={"inference":"billing"}):
-                report=installer.install("auto", dry_run=True)
-            self.assertEqual(report["targets"], [])
-            self.assertEqual(report["changed"], [])
-
-    def test_invalid_configuration_is_not_written(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            path=Path(tmp)/"broken.json";path.write_text('{broken')
-            with self.assertRaises(ValueError): installer.plan_configs({"claude":path},["claude"],"http://localhost/mcp")
-            self.assertEqual(path.read_text(),'{broken')
-
-
 class LoggingTests(unittest.TestCase):
+    def test_compact_route_tool_log_never_prints_task_summary(self):
+        row={"timestamp":"2026-10-09T10:00:00.000+00:00","event":"request.end","transport":"mcp",
+             "tool":"laya_route_task","path":"/mcp","status":200,"duration_ms":1,"success":True,
+             "caller":"mcp-client","task":"password=do-not-log","trace_id":"0123456789abcdef"}
+        line=CompactFormatter().format(logging.LogRecord("test",20,"",1,json.dumps(row),(),None))
+        self.assertNotIn("password",line)
+        self.assertNotIn("do-not-log",line)
+
     def test_redacts_structured_credentials_and_omits_large_payloads(self):
         raw=json.dumps({"api_key":"secret","nested":{"password":"secret"},"state":"hello"}).encode()
         value=body_value(raw,len(raw))

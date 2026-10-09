@@ -14,36 +14,30 @@
   <img alt="MCP Streamable HTTP" src="https://img.shields.io/badge/MCP-Streamable_HTTP-334155">
 </p>
 
-**Local CPU decisions for AI agents.** One container, one model, one setup command.
-MCP, REST, Swagger and a test console. No GPU, paid API, database or dev/prod profiles.
+**Local CPU decisions and MCP-native route coordination.** One container and one resident model.
+MCP, REST, Swagger and a test console. No GPU or paid API.
 
 By **[htrnguyen](https://www.htrnguyen.id.vn/)** · [Tiếng Việt](README.vi.md)
 
 ## START
 
-Requires **Linux/systemd, Docker Compose v2+, Python 3 and [uv](https://docs.astral.sh/uv/getting-started/installation/)**.
-Use a normal account with sudo access. First startup downloads dependencies/model weights.
-Default container limits: 4 CPUs, 4 GiB RAM, no swap.
+Requires Docker Compose v2+. Start the pure MCP service without global client registration:
 
 ```bash
-./setup.sh
+docker compose up -d --build
 ```
 
-Setup enables Docker at boot, starts the service, tests MCP inference and registers detected
-**Claude Code, Codex and OpenCode** clients globally. Open a new agent session afterward.
-Global means all projects of the same OS user on this machine. Clients need no Docker privileges.
+First startup downloads dependencies/model weights. The container remains loopback-only with its existing CPU and memory limits.
+Setup starts the local service only and does not edit MCP client configuration.
 
 | Open | URL |
 |---|---|
-| Test console + copy settings/rules | **http://127.0.0.1:30765/** |
+| Test console | **http://127.0.0.1:30765/** |
 | Swagger | http://127.0.0.1:30765/docs |
 | MCP | http://127.0.0.1:30765/mcp |
 | Health | http://127.0.0.1:30765/health |
 
-Service already running? `./setup.sh --register-only`.
-Select clients with `--targets codex,claude`; preview registration with `--dry-run`.
-The installer backs up changed configs, preserves other entries and avoids duplicates.
-The global skill links to this checkout: keep its location stable.
+The primary tool endpoint is `http://127.0.0.1:30765/mcp`.
 
 ## USE
 
@@ -56,6 +50,10 @@ The global skill links to this checkout: keep its location stable.
 | `laya_status` | Loaded model, device, revision |
 | `laya_decide` | 1–3 typed questions and normalized results |
 | `laya_classify` | Compatible single-classification tool |
+| `laya_route_task` / `laya_route_subtask` | Advisory routes over caller-supplied candidates; no command execution |
+| `laya_capability_search` / `laya_get_route` | Search supplied metadata and retrieve route traces |
+| `laya_report_execution` | Unverified MCP caller self-report |
+| `laya_get_routing_policy` / `laya_update_routing_policy` | Read/update local route policy |
 
 **Choice** selects among 2–10 labels. **Noul** estimates yes/no probability.
 **Score** rates ordered descriptions and is experimental. Noul/score always require review.

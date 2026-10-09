@@ -2,27 +2,14 @@
 set -euo pipefail
 cd -- "$(dirname -- "${BASH_SOURCE[0]}")"
 if [[ $EUID -eq 0 ]]; then echo 'Run ./setup.sh as your normal user, not sudo ./setup.sh.' >&2; exit 1; fi
-register_only=0
 reset=0
-args=()
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --reset) reset=1; shift ;;
-    --register-only) register_only=1; shift ;;
-    --dry-run) register_only=1; args+=("--dry-run"); shift ;;
-    --targets) [[ $# -ge 2 ]] || { echo '--targets requires a value' >&2; exit 2; }; args+=("--targets" "$2"); shift 2 ;;
-    -h|--help) echo 'Usage: ./setup.sh [--reset | --register-only] [--targets auto|all|codex,claude,opencode] [--dry-run]'; exit 0 ;;
+    -h|--help) echo 'Usage: ./setup.sh [--reset]'; exit 0 ;;
     *) echo "Unknown option: $1" >&2; exit 2 ;;
   esac
 done
-if [[ $reset == 1 && $register_only == 1 ]]; then echo "--reset cannot be combined with --register-only/--dry-run" >&2; exit 2; fi
-command -v uv >/dev/null || { echo 'Install uv first: https://docs.astral.sh/uv/getting-started/installation/' >&2; exit 1; }
-register_clients() {
-  export UV_CACHE_DIR="$PWD/data/setup-cache"
-  export UV_PYTHON_INSTALL_DIR="$PWD/data/setup-python"
-  uv run --no-project --with tomlkit==0.15.1 --with json5==0.15.0 python scripts/register_global.py "${args[@]}"
-}
-if [[ $register_only == 1 ]]; then register_clients; exit 0; fi
 [[ -f .env ]] || cp .env.example .env
 sudo -v
 sudo systemctl enable --now docker
@@ -90,6 +77,5 @@ if folder.is_dir() and not folder.is_symlink():
 LOG_CLEANUP
 sudo docker inspect --format '{{json .HostConfig.RestartPolicy}}' "$(compose ps -q laya)" | tee reports/restart-policy.json
 compose exec -T laya cat /app/build-packages.txt > reports/build-packages.txt
-register_clients
 set -a; source .env; set +a
 echo "Ready: Swagger http://127.0.0.1:$LAYA_PORT/docs | MCP http://127.0.0.1:$LAYA_PORT/mcp"

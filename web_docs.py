@@ -39,12 +39,9 @@ def configure_docs(app):
     @app.get("/integrations.json", tags=["Discovery"])
     def integrations():
         url=public_url+"/mcp"
-        return {"scope":"user-global on this machine", "mcp_url":url,
-            "claude":{"mcpServers":{"laya":{"type":"http","url":url,"headers":{"X-Laya-Caller":"claude-code"}}}},
-            "codex_toml":'[mcp_servers.laya]\nurl = '+json.dumps(url)+'\nstartup_timeout_sec = 30\ntool_timeout_sec = 60\n[mcp_servers.laya.http_headers]\nX-Laya-Caller = "codex"\n',
-            "opencode":{"mcp":{"laya":{"type":"remote","url":url,"enabled":True,"oauth":False,"headers":{"X-Laya-Caller":"opencode"}}}},
-            "install":"./setup.sh", "register_only":"./setup.sh --register-only",
-            "note":"Merge the laya entry; do not overwrite unrelated configuration. Never expose unauthenticated service publicly."}
+        return {"transport":"streamable-http", "mcp_url":url,
+                "install":"docker compose up -d --build",
+                "note":"Configure this endpoint in the MCP client explicitly; this service does not edit global client configuration."}
 
     @app.get("/llms.txt", response_class=PlainTextResponse, include_in_schema=False)
     def llms():
@@ -52,7 +49,9 @@ def configure_docs(app):
                 f"- Guide: {public_url}/guide.md\n- Agent rule: {public_url}/rules.md\n"
                 f"- Skill: {public_url}/skill.md\n- Client settings: {public_url}/integrations.json\n"
                 f"- Schema: {public_url}/openapi.json\n- MCP: {public_url}/mcp\n"
-                "Tools: laya_guide, laya_status, laya_classify (legacy raw response), laya_decide (normalized).\n"
+                "Tools: laya_guide, laya_status, laya_classify (legacy raw response), laya_decide (normalized), "
+                "laya_route_task, laya_route_subtask, laya_capability_search, laya_get_route, laya_report_execution, "
+                "laya_get_routing_policy, laya_update_routing_policy.\n"
                 "POST /v1/decide: state, questions [{id,type,instructions,criteria}], caller, task.\n"
                 "type=choice|noul|score. Max 3 questions; prefer one. Score is experimental.\n")
 
